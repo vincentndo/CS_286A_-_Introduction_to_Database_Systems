@@ -3,11 +3,11 @@
 DROP TABLE IF EXISTS q5_extended_paths;
 CREATE TABLE q5_extended_paths(src, dest, length, path)
 AS
-    SELECT DISTINCT e.src, u.dest, u.length + 1, array_prepend(e.src, u.path) AS path  -- remember to remove duplicates!
+    SELECT DISTINCT e.src, u.dest, u.length + e.length, array_prepend(e.src, u.path) AS path  -- remember to remove duplicates!
     FROM q5_paths_to_update u, q5_edges e
     WHERE e.dest = u.src AND e.src != u.dest
     UNION
-    SELECT DISTINCT u.src, e.dest, u.length + 1, array_append(u.path, e.dest) AS path
+    SELECT DISTINCT u.src, e.dest, u.length + e.length, array_append(u.path, e.dest) AS path
     FROM q5_paths_to_update u, q5_edges e
     WHERE u.dest = e.src AND u.src != e.dest
 ;
