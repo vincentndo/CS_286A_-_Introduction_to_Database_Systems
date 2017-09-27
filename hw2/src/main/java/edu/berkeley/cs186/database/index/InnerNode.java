@@ -113,7 +113,7 @@ class InnerNode extends BPlusNode {
       int order = metadata.getOrder();
       i = 0;
       for (DataBox k : keys) {
-        if (k.compareTo(key) <= 0) {
+        if (k.compareTo(splitKey) <= 0) {
           i += 1;
         } else {
           break;

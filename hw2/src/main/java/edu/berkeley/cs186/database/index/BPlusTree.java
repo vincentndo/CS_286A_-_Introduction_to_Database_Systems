@@ -258,8 +258,7 @@ public class BPlusTree {
           List<Integer> children = new ArrayList<>();
           children.add(root.getPage().getPageNum());
           children.add(pageNum);
-          InnerNode newRoot = new InnerNode(metadata, keys, children);
-          root = newRoot;
+          root = new InnerNode(metadata, keys, children);
       }
     }
 
@@ -369,10 +368,21 @@ public class BPlusTree {
       @Override
       public boolean hasNext() {
         List<DataBox> keys = currentLeaf.getKeys();
-        if (currentIndex == keys.size() && !currentLeaf.getRightSibling().isPresent()) {
-          return false;
-        } else {
+        if (currentIndex < keys.size()) {
           return true;
+        } else {
+          if (currentLeaf.getRightSibling().isPresent()) {
+            currentLeaf = currentLeaf.getRightSibling().get();
+            keys = currentLeaf.getKeys();
+            if (keys.size() > 0) {
+              currentIndex = 0;
+              return true;
+            } else {
+              return hasNext();
+            }
+          } else {
+            return false;
+          }
         }
       }
 
@@ -380,11 +390,6 @@ public class BPlusTree {
       public RecordId next() {
         if (hasNext()) {
           List<RecordId> rids = currentLeaf.getRids();
-          if (currentIndex == rids.size()) {
-            currentIndex = 0;
-            currentLeaf = currentLeaf.getRightSibling().get();
-            rids = currentLeaf.getRids();
-          }
           RecordId rid = rids.get(currentIndex);
           currentIndex += 1;
           return rid;
