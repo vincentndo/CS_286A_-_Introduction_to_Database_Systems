@@ -69,26 +69,97 @@ class InnerNode extends BPlusNode {
   // See BPlusNode.get.
   @Override
   public LeafNode get(DataBox key) {
-    throw new UnsupportedOperationException("TODO(hw2): implement.");
+    List<DataBox> keys = getKeys();
+    int i = 0;
+    for (DataBox k : keys) {
+      if (k.compareTo(key) <= 0) {
+        i += 1;
+      } else {
+        break;
+      }
+    }
+    BPlusNode child = getChild(i);
+    return child.get(key);
   }
 
   // See BPlusNode.getLeftmostLeaf.
   @Override
   public LeafNode getLeftmostLeaf() {
-    throw new UnsupportedOperationException("TODO(hw2): implement.");
+    BPlusNode child = getChild(0);
+    return child.getLeftmostLeaf();
   }
 
   // See BPlusNode.put.
   @Override
   public Optional<Pair<DataBox, Integer>> put(DataBox key, RecordId rid)
       throws BPlusTreeException {
-    throw new UnsupportedOperationException("TODO(hw2): implement.");
+    List<DataBox> keys = getKeys();
+    int i = 0;
+    for (DataBox k : keys) {
+      if (k.compareTo(key) <= 0) {
+        i += 1;
+      } else {
+        break;
+      }
+    }
+    BPlusNode child = getChild(i);
+    Optional<Pair<DataBox, Integer>> ret = child.put(key, rid);
+
+    if (ret.isPresent()) {
+      Pair<DataBox, Integer> pair = ret.get();
+      DataBox splitKey = pair.getFirst();
+      Integer pageNum = pair.getSecond();
+      List<Integer> children = getChildren();
+      int order = metadata.getOrder();
+      i = 0;
+      for (DataBox k : keys) {
+        if (k.compareTo(key) <= 0) {
+          i += 1;
+        } else {
+          break;
+        }
+      }
+      keys.add(i, splitKey);
+      children.add(i + 1, pageNum);
+      if (keys.size() <= 2 * order) {
+        sync();
+        return Optional.empty();
+      } else {
+        DataBox newSplitKey = keys.get(order);
+        List<DataBox> new_keys = new ArrayList<>();
+        List<Integer> new_children = new ArrayList<>();
+        for (int j = 2 * order; j > order; j--) {
+          new_keys.add(0, keys.remove(j));
+          new_children.add(0, children.remove(j + 1));
+        }
+        keys.remove(order);
+        new_children.add(0, children.remove(order + 1));
+        InnerNode newInner = new InnerNode(metadata, new_keys, new_children);
+        int newPageNum = newInner.getPage().getPageNum();
+        sync();
+        return Optional.of(new Pair<>(newSplitKey, newPageNum));
+      }
+    } else {
+      sync();
+      return Optional.empty();
+    }
   }
 
   // See BPlusNode.remove.
   @Override
   public void remove(DataBox key) {
-    throw new UnsupportedOperationException("TODO(hw2): implement.");
+    List<DataBox> keys = getKeys();
+    int i = 0;
+    for (DataBox k : keys) {
+      if (k.compareTo(key) <= 0) {
+        i += 1;
+      } else {
+        break;
+      }
+    }
+    BPlusNode child = getChild(i);
+    child.remove(key);
+    sync();
   }
 
   // Helpers ///////////////////////////////////////////////////////////////////

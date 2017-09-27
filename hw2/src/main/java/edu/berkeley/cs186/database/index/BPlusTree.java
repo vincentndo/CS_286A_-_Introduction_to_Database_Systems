@@ -120,7 +120,14 @@ public class BPlusTree {
 
     /** Read a B+ tree that was previously serialized to filename. */
     public BPlusTree(String filename) {
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
+      PageAllocator allocator = new PageAllocator(filename, false);
+      this.headerPage = allocator.fetchPage(0);
+      ByteBuffer buf = this.headerPage.getByteBuffer();
+      Type keySchema = Type.fromBytes(buf);
+      int order = buf.getInt();
+      int rootPageNum = buf.getInt();
+      this.metadata = new BPlusTreeMetadata(allocator, keySchema, order);
+      this.root = BPlusNode.fromBytes(metadata, rootPageNum);
     }
 
     // Core API ////////////////////////////////////////////////////////////////
@@ -139,7 +146,15 @@ public class BPlusTree {
      */
     public Optional<RecordId> get(DataBox key) {
       typecheck(key);
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
+      LeafNode leaf = this.root.get(key);
+      List<DataBox> keys = leaf.getKeys();
+      List<RecordId> rids = leaf.getRids();
+      if (keys.contains(key)) {
+          int index = keys.indexOf(key);
+          return Optional.of(rids.get(index));
+      } else {
+          return Optional.empty();
+      }
     }
 
     /**
@@ -187,8 +202,8 @@ public class BPlusTree {
      * memory will receive 0 points.
      */
     public Iterator<RecordId> scanAll() {
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
       // TODO(hw2): Return a BPlusTreeIterator.
+      return new BPlusTreeIterator();
     }
 
     /**
@@ -217,8 +232,8 @@ public class BPlusTree {
      */
     public Iterator<RecordId> scanGreaterEqual(DataBox key) {
       typecheck(key);
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
       // TODO(hw2): Return a BPlusTreeIterator.
+      return new BPlusTreeIterator(key);
     }
 
     /**
@@ -233,7 +248,19 @@ public class BPlusTree {
      */
     public void put(DataBox key, RecordId rid) throws BPlusTreeException {
       typecheck(key);
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
+      Optional<Pair<DataBox, Integer>> ret = root.put(key, rid);
+      if (ret.isPresent()) {
+          Pair<DataBox, Integer> pair = ret.get();
+          DataBox splitKey = pair.getFirst();
+          Integer pageNum = pair.getSecond();
+          List<DataBox> keys = new ArrayList<>();
+          keys.add(splitKey);
+          List<Integer> children = new ArrayList<>();
+          children.add(root.getPage().getPageNum());
+          children.add(pageNum);
+          InnerNode newRoot = new InnerNode(metadata, keys, children);
+          root = newRoot;
+      }
     }
 
     /**
@@ -250,7 +277,7 @@ public class BPlusTree {
      */
     public void remove(DataBox key) {
       typecheck(key);
-      throw new UnsupportedOperationException("TODO(hw2): implement.");
+      root.remove(key);
     }
 
     // Helpers /////////////////////////////////////////////////////////////////
@@ -318,14 +345,52 @@ public class BPlusTree {
     private class BPlusTreeIterator implements Iterator<RecordId> {
       // TODO(hw2): Add whatever fields and constructors you want here.
 
+      private LeafNode currentLeaf;
+      private int currentIndex;
+
+      public BPlusTreeIterator() {
+        currentLeaf = root.getLeftmostLeaf();
+        currentIndex = 0;
+      }
+
+      public BPlusTreeIterator(DataBox key) {
+        currentLeaf = root.get(key);
+        currentIndex = 0;
+        List<DataBox> keys = currentLeaf.getKeys();
+        for (DataBox k : keys) {
+          if (k.compareTo(key) < 0) {
+            currentIndex += 1;
+          } else {
+            break;
+          }
+        }
+      }
+
       @Override
       public boolean hasNext() {
-        throw new UnsupportedOperationException("TODO(hw2): implement.");
+        List<DataBox> keys = currentLeaf.getKeys();
+        if (currentIndex == keys.size() && !currentLeaf.getRightSibling().isPresent()) {
+          return false;
+        } else {
+          return true;
+        }
       }
 
       @Override
       public RecordId next() {
-        throw new UnsupportedOperationException("TODO(hw2): implement.");
+        if (hasNext()) {
+          List<RecordId> rids = currentLeaf.getRids();
+          if (currentIndex == rids.size()) {
+            currentIndex = 0;
+            currentLeaf = currentLeaf.getRightSibling().get();
+            rids = currentLeaf.getRids();
+          }
+          RecordId rid = rids.get(currentIndex);
+          currentIndex += 1;
+          return rid;
+        } else {
+          throw new NoSuchElementException();
+        }
       }
     }
 }
