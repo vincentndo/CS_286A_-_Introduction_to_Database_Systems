@@ -593,10 +593,12 @@ public class Table implements Iterable<Record>, Closeable {
       this.block.next();
       this.blockIter = this.markedBlockIter;
       this.blockIter.reset();
-      // If we're at the end of a page, we don't want to repeat the record
-      this.blockIter.next();
-      if (this.blockIter.hasNext()) {
-        this.blockIter.reset();
+      // If we're at the end of the block, we don't want to repeat the record
+      if (!this.block.hasNext()) {
+        this.blockIter.next();
+        if (this.blockIter.hasNext()) {
+          this.blockIter.reset();
+        }
       }
 
       this.prevRecordId = null;

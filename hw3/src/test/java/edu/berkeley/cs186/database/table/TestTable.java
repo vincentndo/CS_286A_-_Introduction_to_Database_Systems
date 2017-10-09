@@ -389,6 +389,29 @@ public class TestTable {
     iter.reset();
     checkSequentialRecords(numRecords / 2 - 1, numRecords, 1, iter);
     assertFalse(iter.hasNext());
+
+    // page boundary test
+    pages = table.getAllocator().iterator();
+    pages.next();
+    iter = new RecordIterator(table, table.new RIDBlockIterator(pages, 3));
+    // test second to last record of second to last page
+    checkSequentialRecords(0, 2 * numRecords / 3 - 1, 1, iter);
+    iter.mark();
+    checkSequentialRecords(2 * numRecords / 3 - 1, numRecords, 1, iter);
+    assertFalse(iter.hasNext());
+    iter.reset();
+    checkSequentialRecords(2 * numRecords / 3 - 2, numRecords, 1, iter);
+    assertFalse(iter.hasNext());
+    iter.reset();
+    iter.next();
+    iter.next();
+    // test last record of second to last page
+    iter.mark();
+    checkSequentialRecords(2 * numRecords / 3, numRecords, 1, iter);
+    assertFalse(iter.hasNext());
+    iter.reset();
+    checkSequentialRecords(2 * numRecords / 3 - 1, numRecords, 1, iter);
+    assertFalse(iter.hasNext());
   }
 
   /**

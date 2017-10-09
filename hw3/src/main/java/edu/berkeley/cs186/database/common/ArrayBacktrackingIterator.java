@@ -23,7 +23,10 @@ public class ArrayBacktrackingIterator<T> implements BacktrackingIterator<T> {
   }
 
   public void mark() {
-    if (this.currentIndex == 0) {
+    // The second condition prevents using mark/reset/mark/reset/.. to
+    // move the iterator backwards; it uses the fact that once markedIndex
+    // is set, currentIndex cannot ever be smaller than markedIndex - 1.
+    if (this.currentIndex == 0 || this.currentIndex < this.markedIndex) {
       return;
     }
     this.markedIndex = this.currentIndex;
