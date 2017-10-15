@@ -376,4 +376,59 @@ public class TestBPlusTree {
       assertEquals(5, InnerNode.maxOrder(pageSizeInBytes, keySchema));
       assertEquals(4, BPlusTree.maxOrder(pageSizeInBytes, keySchema));
     }
+
+  @Test
+  public void testStudent01() throws BPlusTreeException, IOException {
+    List<DataBox> keys = new ArrayList<>();
+    List<RecordId> rids = new ArrayList<>();
+    List<RecordId> sortedRids = new ArrayList<>();
+    List<RecordId> emptyRids = new ArrayList<>();
+    for (int i = 0; i < 1000; ++i) {
+      keys.add(new IntDataBox(i));
+      rids.add(new RecordId(i, (short) i));
+      sortedRids.add(new RecordId(i, (short) i));
+    }
+
+    // Try trees with different orders.
+    for (int d = 2; d < 5; ++d) {
+      // Try trees with different insertion orders.
+      for (int n = 0; n < 2; ++n) {
+        Collections.shuffle(keys, new Random(42));
+        Collections.shuffle(rids, new Random(42));
+
+        // Insert all the keys.
+        BPlusTree tree = getBPlusTree(Type.intType(), d);
+        for (int i = 0; i < keys.size(); ++i) {
+          tree.put(keys.get(i), rids.get(i));
+        }
+
+        List<Integer> intList = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+          intList.add(i);
+        }
+        Collections.shuffle(intList);
+
+        for (int i = 0; i < 1000; i++) {
+          tree.remove(new IntDataBox(intList.get(i)));
+        }
+        assertEquals(emptyRids, iteratorToList(tree.scanAll()));
+
+        for (int i = 0; i < 1000; i++) {
+          assertEquals(emptyRids, iteratorToList(tree.scanGreaterEqual(new IntDataBox(i))));
+        }
+
+        BPlusTree fromDisk = new BPlusTree(file.getAbsolutePath());
+        assertEquals(emptyRids, iteratorToList(fromDisk.scanAll()));
+
+        // Test remove.
+        Collections.shuffle(keys, new Random(42));
+        Collections.shuffle(rids, new Random(42));
+        for (DataBox key : keys) {
+          fromDisk.remove(key);
+          assertEquals(Optional.empty(), fromDisk.get(key));
+        }
+      }
+    }
+  }
+
 }
