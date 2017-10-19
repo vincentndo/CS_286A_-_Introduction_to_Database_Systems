@@ -7,14 +7,14 @@ import java.util.Set;
 import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.table.RecordId;
 
-// TODO(michael + sanjay):
+
 // 1. Make queries multi-threaded in a way that is easy for students.
 // 2. Build the LockManager.
 // 3. Make database, table, and pages use the lock manager and don't permit
 //    unlocked access.
 // 4. Write a deadlock detector in a separate thread.
 
-// TODO(mwhittaker): Take txn instead of id.
+
 public class LockManager {
   // table name -> lock
   private Map<String, Lock> tableLocks = new HashMap<>();

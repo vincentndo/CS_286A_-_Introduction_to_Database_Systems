@@ -222,7 +222,6 @@ public class Table implements Iterable<Record>, Closeable {
     return allocator.getNumPages() - 1;
   }
 
-  // TODO(mwhittaker): This should not be public. Right now, other code
   // elsewhere reads the bitmap of tables, so we're forced to make it public.
   // We should refactor to avoid this.
   public byte[] getBitMap(Page page) {

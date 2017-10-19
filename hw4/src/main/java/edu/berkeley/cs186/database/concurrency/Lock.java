@@ -49,7 +49,6 @@ public class Lock {
         try {
           wait();
         } catch (InterruptedException e) {
-          // TODO(mwhittaker): Handle exception.
         }
         conflicts = getConflictingTransactions(to);
         conflicts.remove(tid);

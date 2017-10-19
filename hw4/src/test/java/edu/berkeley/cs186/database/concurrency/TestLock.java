@@ -90,5 +90,4 @@ public class TestLock {
     assertFalse(lock.promote(0l, LockType.X, LockType.S, ignoreConflicts));
   }
 
-  // TODO(mwhittaker): Test conflicts.
 }
