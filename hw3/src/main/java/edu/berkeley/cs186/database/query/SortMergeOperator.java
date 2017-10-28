@@ -8,8 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.sun.org.apache.regexp.internal.RE;
 import edu.berkeley.cs186.database.Database;
 import edu.berkeley.cs186.database.DatabaseException;
+import edu.berkeley.cs186.database.common.BacktrackingIterator;
 import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.io.Page;
 import edu.berkeley.cs186.database.table.Record;
@@ -37,10 +39,72 @@ public class SortMergeOperator extends JoinOperator {
   */
   private class SortMergeIterator extends JoinIterator {
     //add any member variables you need here
+    String leftTableName;
+    String rightTableName;
+    private BacktrackingIterator<Record> leftRecordIterator;
+    private BacktrackingIterator<Record> rightRecordIterator;
+    private Record leftRecord;
+    private Record rightRecord;
+    private Boolean wasEqual;
+    private Record nextRecord;
 
     public SortMergeIterator() throws QueryPlanException, DatabaseException {
-      super();
-      throw new UnsupportedOperationException("hw3: TODO");
+      String leftTableName = getLeftTableName();
+      String rightTableName = getRightTableName();
+
+      SortOperator leftSortOperator = new SortOperator(SortMergeOperator.this.getTransaction(), leftTableName, new LeftRecordComparator());
+      SortOperator rightSortOperator = new SortOperator(SortMergeOperator.this.getTransaction(), rightTableName, new RightRecordComparator());
+      this.leftTableName = leftSortOperator.sort();
+      this.rightTableName = rightSortOperator.sort();
+
+      try {
+        this.leftRecordIterator = SortMergeOperator.this.getRecordIterator(this.leftTableName);
+        this.leftRecord = this.leftRecordIterator.next();
+        this.leftRecordIterator.mark();
+      } catch (DatabaseException | NoSuchElementException e) {
+        this.leftRecordIterator = null;
+        this.leftRecord = null;
+      }
+
+      try {
+        this.rightRecordIterator = SortMergeOperator.this.getRecordIterator(this.rightTableName);
+        this.rightRecord = this.rightRecordIterator.next();
+        this.rightRecordIterator.mark();
+      } catch (DatabaseException | NoSuchElementException e) {
+        this.rightRecordIterator = null;
+        this.rightRecord = null;
+      }
+      this.wasEqual = false;
+    }
+
+    private int compareRecords(Record leftRecord, Record rightRecord) {
+      DataBox leftJoinValue = leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
+      DataBox rightJoinValue = rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
+      if (leftJoinValue.equals(rightJoinValue)) {
+        List<DataBox> leftValues = new ArrayList<DataBox>(leftRecord.getValues());
+        List<DataBox> rightValues = new ArrayList<DataBox>(rightRecord.getValues());
+        leftValues.addAll(rightValues);
+        this.nextRecord = new Record(leftValues);
+        return 0;
+      } else {
+        return leftJoinValue.compareTo(rightJoinValue);
+      }
+    }
+
+    private void advanceLeftRecord() {
+      try {
+        this.leftRecord = this.leftRecordIterator.next();
+      } catch (NoSuchElementException e) {
+        this.leftRecord = null;
+      }
+    }
+
+    private void advanceRightRecord() {
+      try {
+        this.rightRecord = this.rightRecordIterator.next();
+      } catch (NoSuchElementException e) {
+        this.rightRecord = null;
+      }
     }
 
     /**
@@ -49,7 +113,50 @@ public class SortMergeOperator extends JoinOperator {
      * @return true if this iterator has another record to yield, otherwise false
      */
     public boolean hasNext() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (this.nextRecord != null) {
+        return true;
+      } else {
+        while (true) {
+          if (this.leftRecord == null) {
+            return false;
+          } else if (this.rightRecord == null) {
+            if (this.wasEqual) {
+              this.rightRecordIterator.reset();
+              advanceRightRecord();
+              advanceLeftRecord();
+              this.wasEqual = false;
+            } else {
+              return false;
+            }
+          } else {
+            if (compareRecords(this.leftRecord, this.rightRecord) != 0) {
+              if (this.wasEqual) {
+                this.rightRecordIterator.reset();
+                advanceRightRecord();
+                advanceLeftRecord();
+                this.wasEqual = false;
+              } else {
+                while (compareRecords(this.leftRecord, this.rightRecord) > 0) {
+                  this.wasEqual = false;
+                  advanceRightRecord();
+                }
+
+                while (compareRecords(this.leftRecord, this.rightRecord) < 0) {
+                  this.wasEqual = false;
+                  advanceLeftRecord();
+                }
+              }
+            } else if (compareRecords(this.leftRecord, this.rightRecord) == 0) {
+              if (this.wasEqual == false) {
+                this.rightRecordIterator.mark();
+              }
+              this.wasEqual = true;
+              advanceRightRecord();
+              return true;
+            }
+          }
+        }
+      }
     }
 
     /**
@@ -59,7 +166,13 @@ public class SortMergeOperator extends JoinOperator {
      * @throws NoSuchElementException if there are no more Records to yield
      */
     public Record next() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (hasNext()) {
+        Record ret = this.nextRecord;
+        this.nextRecord = null;
+        return ret;
+      } else {
+        throw new NoSuchElementException();
+      }
     }
 
     public void remove() {

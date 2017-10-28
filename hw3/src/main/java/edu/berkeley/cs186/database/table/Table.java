@@ -436,25 +436,62 @@ public class Table implements Iterable<Record>, Closeable {
    */
   public class RIDPageIterator implements BacktrackingIterator<RecordId> {
     //member variables go here
+    private Page page = null;
+    private int previous = -1;
+    private int next = -1;
+    private int marked = -1;
+
 
     public RIDPageIterator(Page page) {
-      throw new UnsupportedOperationException("hw3: TODO");
+      this.page = page;
+      byte[] bitmap = getBitMap(this.page);
+
+      for (int i = 0; i < numRecordsPerPage; i++) {
+        if (Bits.getBit(bitmap, i) == Bits.Bit.ONE) {
+          this.next = i;
+          break;
+        }
+      }
     }
 
     public boolean hasNext() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      return this.next != -1;
     }
 
     public RecordId next() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (hasNext()) {
+        RecordId ret = new RecordId(this.page.getPageNum(), (short) this.next);
+        byte[] bitmap = getBitMap(this.page);
+        this.previous = this.next;
+
+        for (int i = this.next + 1; i < numRecordsPerPage; i++) {
+          if (Bits.getBit(bitmap, i) == Bits.Bit.ONE) {
+            this.next = i;
+            break;
+          }
+        }
+
+        if (this.next == this.previous) {
+          this.next = -1;
+        }
+
+        return ret;
+      } else {
+        throw new NoSuchElementException();
+      }
     }
 
     public void mark() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (this.previous != -1) {
+        this.marked = this.previous;
+      }
     }
 
     public void reset() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (this.marked != -1) {
+        this.next = this.marked;
+        this.previous = -1;
+      }
     }
   }
 
@@ -515,8 +552,16 @@ public class Table implements Iterable<Record>, Closeable {
 
     public RIDBlockIterator(BacktrackingIterator<Page> block) {
       this.block = block;
-      throw new UnsupportedOperationException("hw3: TODO"); //if you want to add anything to this constructor, feel free to
 
+      if (this.block.hasNext()) {
+        this.blockIter = new RIDPageIterator(this.block.next());
+      }
+
+      try {
+        this.nextRecordId = this.blockIter.next();
+      } catch (NoSuchElementException e) {
+        // Do nothing
+      }
     }
 
     /**
@@ -553,11 +598,36 @@ public class Table implements Iterable<Record>, Closeable {
     }
 
     public boolean hasNext() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      return this.nextRecordId != null;
     }
 
     public RecordId next() {
-      throw new UnsupportedOperationException("hw3: TODO");
+      if (hasNext()) {
+        this.prevRecordId = this.nextRecordId;
+
+        try {
+          this.nextRecordId = this.blockIter.next();
+          return this.prevRecordId;
+        } catch (NoSuchElementException e) {
+          if (this.block.hasNext()) {
+            this.blockIter = new RIDPageIterator(this.block.next());
+          } else {
+//            this.blockIter = null;
+            this.nextRecordId = null;
+            return this.prevRecordId;
+          }
+        }
+
+        try {
+          this.nextRecordId = this.blockIter.next();
+        } catch (NoSuchElementException e) {
+          this.nextRecordId = null;
+        }
+        return this.prevRecordId;
+
+      } else {
+        throw new NoSuchElementException();
+      }
     }
 
     /**

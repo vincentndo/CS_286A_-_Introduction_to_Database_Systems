@@ -347,7 +347,6 @@ public class TestJoinOperator {
     int numRecords = 0;
     Record expectedRecord;
 
-
     while (outputIterator.hasNext()) {
       if (numRecords < (288*288/4)) {
         expectedRecord = expectedRecord1;
@@ -359,7 +358,7 @@ public class TestJoinOperator {
         expectedRecord = expectedRecord4;
       }
       Record r = outputIterator.next();
-      assertEquals(r, expectedRecord);
+      assertEquals(expectedRecord, r);
       numRecords++;
     }
 

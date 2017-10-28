@@ -1,5 +1,6 @@
 package edu.berkeley.cs186.database.query;
 
+import com.sun.org.apache.regexp.internal.RE;
 import edu.berkeley.cs186.database.Database;
 import edu.berkeley.cs186.database.DatabaseException;
 import edu.berkeley.cs186.database.databox.DataBox;
@@ -9,6 +10,7 @@ import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.io.Page;
 
 import java.util.*;
+import java.util.prefs.BackingStoreException;
 
 
 public class SortOperator  {
@@ -71,7 +73,15 @@ public class SortOperator  {
    * size of the buffer, but it is done this way for ease.
    */
   public Run sortRun(Run run) throws DatabaseException {
-    throw new UnsupportedOperationException("hw3: TODO");
+    Run ret = createRun();
+    List<Record> recordList = new ArrayList<>();
+    Iterator<Record> runIterator = run.iterator();
+    while (runIterator.hasNext()) {
+      recordList.add(runIterator.next());
+    }
+    Collections.sort(recordList, this.comparator);
+    ret.addRecords(recordList);
+    return ret;
   }
 
 
@@ -85,8 +95,31 @@ public class SortOperator  {
    * sorting on currently unmerged from run i.
    */
   public Run mergeSortedRuns(List<Run> runs) throws DatabaseException {
-    throw new UnsupportedOperationException("hw3: TODO");
+    Run ret = createRun();
+    RecordPairComparator pairComparator = new RecordPairComparator();
+    PriorityQueue< Pair<Record, Integer> > recordPQueue = new PriorityQueue<>(pairComparator);
+    List<Record> recordList = new ArrayList<>();
+    List< Iterator<Record> > iteratorList = new ArrayList<>();
 
+    for (int i = 0; i < runs.size(); i++) {
+      Iterator<Record> recordIterator = runs.get(i).iterator();
+      iteratorList.add(recordIterator);
+      if (recordIterator.hasNext()) {
+        recordPQueue.add(new Pair<>(recordIterator.next(), i));
+      }
+    }
+
+    while (recordPQueue.isEmpty() == false) {
+      Pair<Record, Integer> pair = recordPQueue.poll();
+      int i = pair.getSecond();
+      recordList.add(pair.getFirst());
+      if (iteratorList.get(i).hasNext()) {
+        recordPQueue.add(new Pair<>(iteratorList.get(i).next(), i));
+      }
+    }
+
+    ret.addRecords(recordList);
+    return ret;
   }
 
   /**
@@ -95,8 +128,17 @@ public class SortOperator  {
    * of the input runs at a time.
    */
   public List<Run> mergePass(List<Run> runs) throws DatabaseException {
-    throw new UnsupportedOperationException("hw3: TODO");
+    List<Run> ret = new ArrayList<>();
 
+    while (runs.isEmpty() == false) {
+      List<Run> tempRunList = new ArrayList<>();
+      int n = java.lang.Math.min(this.numBuffers - 1, runs.size());
+      for (int i = 0; i < n; i++) {
+        tempRunList.add(runs.remove(0));
+      }
+      ret.add(mergeSortedRuns(tempRunList));
+    }
+    return ret;
   }
 
 
@@ -106,8 +148,38 @@ public class SortOperator  {
    * Returns the name of the table that backs the final run.
    */
   public String sort() throws DatabaseException {
-    throw new UnsupportedOperationException("hw3: TODO");
+    List<Run> allRunList = new ArrayList<>();
 
+    Iterator<Page> pageIterator = this.transaction.getPageIterator(this.tableName);
+    pageIterator.next();
+
+    while (pageIterator.hasNext()) {
+      List<Run> runList = new ArrayList<>();
+      for (int i = 0; i < this.numBuffers; i++) {
+        try {
+          Page[] pageList = {pageIterator.next()};
+          Iterator<Record> blockIterator = this.transaction.getBlockIterator(this.tableName, pageList);
+          Run run = createRun();
+          while(blockIterator.hasNext()) {
+            run.addRecord(blockIterator.next().getValues());
+          }
+          runList.add(run);
+        } catch (NoSuchElementException e) {
+          break;
+        }
+      }
+
+      for (int i = 0; i < runList.size(); i++) {
+        Run newRun = this.sortRun(runList.get(i));
+        allRunList.add(newRun);
+      }
+    }
+
+    while (allRunList.size() > 1) {
+      allRunList = this.mergePass(allRunList);
+    }
+
+    return allRunList.get(0).tableName();
   }
 
 
@@ -121,7 +193,4 @@ public class SortOperator  {
   public Run createRun() throws DatabaseException {
     return new Run();
   }
-
-
-
 }
