@@ -53,6 +53,7 @@ public class LockManager {
      */
     private boolean compatible(String tableName, Transaction transaction, LockType lockType) {
         //TODO: HW5 Implement
+        return false;
     }
 
     /**
@@ -75,6 +76,7 @@ public class LockManager {
      */
     public boolean holds(Transaction transaction, String tableName, LockType lockType) {
         //TODO: HW5 Implement
+        return false;
     }
 
     /**
