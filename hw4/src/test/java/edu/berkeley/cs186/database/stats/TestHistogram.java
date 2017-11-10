@@ -1,4 +1,4 @@
-package edu.berkeley.cs186.database.table.stats;
+package edu.berkeley.cs186.database.stats;
 
 import org.junit.Before;
 import org.junit.Test;
