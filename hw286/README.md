@@ -72,6 +72,31 @@ You are now connected to database "optimizer" as user "jmh".
 optimizer=# 
 ```
 
+# Getting git set up
+First, open up Virtual Box and power on the CS186 virtual machine. Once the machine is booted up, open a terminal and go to the course-projects folder you created in hw0.
+
+```bash
+$ cd course-projects
+```
+
+Make sure that you switch to the master branch:
+```
+$ git checkout master
+```
+
+It is good practice to run git status to make sure that you haven't inadvertently changed anything in the master branch. Now, you want to add the reference to the staff repository so you call pull the new homework files:
+```
+$ git fetch staff master
+$ git merge staff/master master
+The git merge will give you a warning and a merge prompt if you have made any conflicting changes to master.
+```
+
+As with hw1, hw2, hw3, hw4, and hw5 make sure you create a new branch for your work:
+```
+git checkout -b hw286
+```
+Now, you should be ready to start the homework. Don't forget to push to this branch when you are done with everything!
+
 # Testing and Grades
 As this is a graduate assignment, you are expected to develop your own tests. You can consider unit-testing your cost and selectivity formulae. You may want to try a wider variety of different schemas and queries. You can also disable various join methods or costs and see how that affects your outputs.
 
