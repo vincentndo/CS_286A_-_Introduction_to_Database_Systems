@@ -3,6 +3,8 @@ In this assignment, you will build a SQL optimizer in SQL. This is an example of
 
 **Due date:** This homework is due at 11:59PM on Sunday 12/3. We encourage you to finish by then, and use the following week for studying. However we are offering a no-penalty extension until 11:59PM Saturday 12/9 for those who need extra time.
 
+*You are encouraged to work in pairs on this homework*, but I will accept individual submissions as well.
+
 We have abstracted away some of the fussy details for you:
   - Input: We are not expecting you to parse an SQL query; we assume the query is already described as a set of relational metadata.
   - Output: We are not expecting you to translate the symbolic query plan into something that can be executed; your chosen plan will be represented via a set of relational metadata that can be parsed into a physical query plan for a query executor.
