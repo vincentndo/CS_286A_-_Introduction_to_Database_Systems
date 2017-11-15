@@ -9,7 +9,7 @@ We have abstracted away some of the fussy details for you:
   - Input: We are not expecting you to parse an SQL query; we assume the query is already described as a set of relational metadata.
   - Output: We are not expecting you to translate the symbolic query plan into something that can be executed; your chosen plan will be represented via a set of relational metadata that can be parsed into a physical query plan for a query executor.
     
-We have given you the [basic schema for the optimizer state](img/metaschema.png), though you may choose to extend it with any views and supplemental tables you like.
+We have given you a [skeleton schema for the optimizer state](img/metaschema.png), though you may need to extend it with additional views and tables.
 
 Your job will be to:
   1. Write queries in SQL to populate the summary statistics for the optimizer.
