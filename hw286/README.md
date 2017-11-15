@@ -111,7 +111,7 @@ The [visualization notebook](visualizer.ipynb) included provides some Vega3 code
 
 Extra credit of 5% *for the semester final grade* is available if you visualize the plan space in ways that could be useful to future students in understanding query optimization.
 
-## Inspiration & References
+# Inspiration & References
 This homework is based on three earlier efforts of interest:
 - Most directly, on [Evita Raced](https://scholar.google.com/scholar?cluster=16501830913872386516&hl=en&as_sdt=0,5), a self-hosted compiler for Datalog, which is an extended relational language. This homework is essentially a subset of Evita Raced, implemented in SQL rather than Datalog.
 - Guy Lohman's [Starburst extensible query optimizer](https://scholar.google.com/scholar?cluster=10995892643382871734&hl=en&as_sdt=0,5)
