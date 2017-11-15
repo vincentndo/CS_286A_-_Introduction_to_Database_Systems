@@ -104,7 +104,7 @@ Now, you should be ready to start the homework. Don't forget to push to this bra
 # Testing and Grades
 As this is a graduate assignment, you are expected to develop your own tests. You can consider unit-testing your cost and selectivity formulae. You may want to try a wider variety of different schemas and queries. You can also disable various join methods or costs and see how that affects your outputs.
 
-We will grade this assignment *qualitatively* with a letter grade. Selecting `Run All` from the `Cell` menu of the notebook must produce a good plan for the query given in the notebook, with reasonable cost and size estimates. We may also try some other queries, and see how your chosen plans and cost estimates compare to ours. We may also read over your code.
+We will grade this assignment *qualitatively* with a letter grade. Selecting `Run All` from the `Cell` menu of the notebook must produce a good plan for the query given in the notebook, with reasonable cost and size estimates. We may also try some other queries, and see how your chosen plans and cost estimates compare to ours. We will also read over your code.
 
 ## Extra credit: incremental visualization
 The [visualization notebook](visualizer.ipynb) included provides some Vega3 code for visualizing a single plan tree. It would be much more useful to be able to visualize all the subtrees searched during dynamic programming. One obvious improvement would be to use Vega's [`group` marks](https://vega.github.io/vega/docs/marks/group/) to show many subgraphs in a grid, something like in [this example visualization](https://vega.github.io/vega/examples/brushing-scatter-plots/).
