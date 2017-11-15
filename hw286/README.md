@@ -110,3 +110,9 @@ We will grade this assignment *qualitatively* with a letter grade. Selecting `Ru
 The [visualization notebook](visualizer.ipynb) included provides some Vega3 code for visualizing a single plan tree. It would be much more useful to be able to visualize all the subtrees searched during dynamic programming. One obvious improvement would be to use Vega's [`group` marks](https://vega.github.io/vega/docs/marks/group/) to show many subgraphs in a grid, something like in [this example visualization](https://vega.github.io/vega/examples/brushing-scatter-plots/).
 
 Extra credit of 5% *for the semester final grade* is available if you visualize the plan space in ways that could be useful to future students in understanding query optimization.
+
+## Inspiration & References
+This homework is based on three earlier efforts of interest:
+- Most directly, on [Evita Raced](https://scholar.google.com/scholar?cluster=16501830913872386516&hl=en&as_sdt=0,5), a self-hosted compiler for Datalog, which is an extended relational language. This homework is essentially a subset of Evita Raced, implemented in SQL rather than Datalog.
+- Guy Lohman's [Starburst extensible query optimizer](https://scholar.google.com/scholar?cluster=10995892643382871734&hl=en&as_sdt=0,5)
+- Goetz Graefe's series of optimizer generators in [Exodus](https://scholar.google.com/scholar?cluster=12818289020522526536&hl=en&as_sdt=0,5), [Volcano](https://scholar.google.com/scholar?cluster=2304531151126477511&hl=en&as_sdt=0,5) and [Cascades](https://scholar.google.com/scholar?cluster=4942467188838848130&hl=en&as_sdt=0,5). Note that Cascades architecture is used in a number of commercial systems including MS SQL Server, as well as [Apache Calcite](http://calcite.apache.org).
