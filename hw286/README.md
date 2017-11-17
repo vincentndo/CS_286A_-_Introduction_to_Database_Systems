@@ -49,6 +49,12 @@ In the same bash shell, we add support for the latest version of the [Vega](http
 % sudo jupyter nbextension enable vega3 --py --sys-prefix
 ```
 
+## Creating the Database
+You will need to create a database called `optimizer` for this assignment:
+```bash
+% createdb optimizer
+```
+
 ## The Notebook
 You should not be ready to do the rest of the homework, which is in [this Jupyter notebook](sqloptimizer.ipynb).  You can view it on github, but to interact with it you need to get back into the VM and run jupyter:
 
