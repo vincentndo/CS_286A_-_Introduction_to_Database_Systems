@@ -1,10 +1,15 @@
 package edu.berkeley.cs186.database.table.stats;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 
 import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.query.QueryPlan.PredicateOperator;
 import edu.berkeley.cs186.database.DatabaseException;
+import edu.berkeley.cs186.database.table.RecordId;
+import edu.berkeley.cs186.database.table.RecordIterator;
 import edu.berkeley.cs186.database.table.Table;
 import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.databox.TypeId;
@@ -122,8 +127,6 @@ public class Histogram {
    */
   public void buildHistogram(Table table, int attribute){
 
-      // TODO: HW4 implement
-
       //1. first calculate the min and the max values
 
       //2. calculate the width of each bin
@@ -131,7 +134,38 @@ public class Histogram {
       //3. create each bucket object
       
       //4. populate the data using the increment(value) method
-      
+
+    this.minValue = Integer.MAX_VALUE;
+    this.maxValue = Integer.MIN_VALUE;
+    List<Float> quantizedDataBoxList = new ArrayList<>();
+    Iterator<RecordId> ridIterator = table.ridIterator();
+    RecordIterator recordIterator = new RecordIterator(table, ridIterator);
+
+    while (recordIterator.hasNext()) {
+      Record record = recordIterator.next();
+      float val = this.quantization(record, attribute);
+      if (val > this.maxValue) {
+        this.maxValue = val;
+      }
+      if (val < this.minValue) {
+        this.minValue = val;
+      }
+      quantizedDataBoxList.add(val);
+    }
+
+    this.width = (this.maxValue - this.minValue) / this.numBuckets;
+    for (int i = 0; i < this.numBuckets; i++) {
+      this.buckets[i] = new Bucket(i * this.width, (i + 1) * this.width);
+    }
+
+    for (float quantizedDatabox : quantizedDataBoxList) {
+      if (quantizedDatabox == this.maxValue) {
+        this.buckets[buckets.length - 1].increment(quantizedDatabox);
+      } else {
+        int i = (int) Math.floor((quantizedDatabox - this.minValue) / this.width);
+        this.buckets[i].increment(quantizedDatabox);
+      }
+    }
   }
 
 
@@ -297,8 +331,21 @@ public class Histogram {
    */ 
   private float [] allEquality(float qvalue){
     float [] result = new float[this.numBuckets];
-    
-    // TODO: HW4 implement;
+    int j;
+
+    if (qvalue == this.maxValue) {
+      j = this.numBuckets - 1;
+    } else {
+      j = (int) Math.floor(qvalue / this.width);
+    }
+
+    for (int i = 0; i < this.numBuckets; i++) {
+      if (i == j) {
+        result[i] = (float) (1.0 / this.buckets[i].getDistinctCount());
+      } else {
+        result[i] = 0;
+      }
+    }
 
     return result;
   }
@@ -310,10 +357,21 @@ public class Histogram {
    */ 
   private float [] allNotEquality(float qvalue){
     float [] result = new float[this.numBuckets];
-    
+    int j;
 
-    // TODO: HW4 implement;
+    if (qvalue == this.maxValue) {
+      j = this.numBuckets - 1;
+    } else {
+      j = (int) Math.floor(qvalue / this.width);
+    }
 
+    for (int i = 0; i < this.numBuckets; i++) {
+      if (i == j) {
+        result[i] = (float) (1 - 1.0 / this.buckets[i].getDistinctCount());
+      } else {
+        result[i] = 1;
+      }
+    }
 
     return result;
   }
@@ -326,8 +384,23 @@ public class Histogram {
   private float [] allGreaterThan(float qvalue){
     
     float [] result = new float[this.numBuckets];
+    int j;
 
-    // TODO: HW4 implement;
+    if (qvalue == this.maxValue) {
+      j = this.numBuckets - 1;
+    } else {
+      j = (int) Math.floor(qvalue / this.width);
+    }
+
+    for (int i = 0; i < this.numBuckets; i++) {
+      if (i == j) {
+        result[i] = (this.buckets[i].getEnd() - qvalue) / this.width;
+      } else if (i < j){
+        result[i] = 0;
+      } else {
+        result[i] = 1;
+      }
+    }
 
     return result;
   }
@@ -340,8 +413,23 @@ public class Histogram {
   private float [] allLessThan(float qvalue){
     
     float [] result = new float[this.numBuckets];
+    int j;
 
-    // TODO: HW4 implement;
+    if (qvalue == this.maxValue) {
+      j = this.numBuckets - 1;
+    } else {
+      j = (int) Math.floor(qvalue / this.width);
+    }
+
+    for (int i = 0; i < this.numBuckets; i++) {
+      if (i == j) {
+        result[i] = (qvalue - this.buckets[i].getStart()) / this.width;
+      } else if (i < j){
+        result[i] = 1;
+      } else {
+        result[i] = 0;
+      }
+    }
 
     return result;
   }
